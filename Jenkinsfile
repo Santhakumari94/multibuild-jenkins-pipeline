@@ -1,9 +1,4 @@
 pipeline {
-    environment {
-        registry = "20.106.186.255:8085/chatapp"
-        registryCredential = 'nexus-hub'
-        dockerImage = ''
-    }
     agent any 
     // agent is where my pipeline will be eexecuted
     tools {
@@ -13,7 +8,7 @@ pipeline {
     stages {
         stage('pull from scm') {
             steps {
-            git credentialsId: 'gopal', url: 'https://github.com/gopal1409/springchat1.git'
+            git credentialsId: 'gopal1409', url: 'https://github.com/gopal1409/jenkins-ansible-tomcat.git'
             }
         }
          stage('build it') {
@@ -21,20 +16,9 @@ pipeline {
             sh 'mvn clean package'
             }
         }
-        stage('docker image') {
+        stage('install tomcat') {
             steps {
-                script {
-                  dockerImage=docker.build registry + ":$BUILD_NUMBER"
-                }
-            }
-        }
-        stage('docker push') {
-            steps {
-                script {
-                  docker.withRegistry('http://20.106.186.255:8085',registryCredential) {
-                      dockerImage.push()
-                  }
-                }
+              ansiblePlaybook credentialsId: 'ansible-jenkins', disableHostKeyChecking: true, inventory: 'dev.inv', playbook: 'tomcat.yml'
             }
         }
     }
